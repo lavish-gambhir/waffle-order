@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-const port = "9090"
+const port = "9090" // TODO: Add `viper` for config management
 
 func main() {
 	lsnr, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
@@ -20,6 +20,7 @@ func main() {
 	}
 	srv := grpc.NewServer()
 	v1.RegisterOrderManagementServer(srv, internal.NewOrderServer())
+	v1.RegisterSayHelloServer(srv, internal.NewHelloServer())
 	fmt.Printf("server listening on port:%s\n", port)
 	if err := srv.Serve(lsnr); err != nil {
 		log.Fatalf("unable to serve %v", err)
