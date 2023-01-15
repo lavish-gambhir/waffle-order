@@ -12,7 +12,12 @@ service OrderManagement {
 
 message Order {
     string id = 1;
-    repeated string waffles = 2;
+    repeated Waffle waffles = 2;
     string description = 3;
     float price = 4;
+}
+
+message Waffle {
+    string name = 1;
+    string type = 2;
 }
