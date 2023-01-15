@@ -1,2 +1,2 @@
-# expert-waffle
-A sample ecommerce order management service
+# waffle-order
+A waffle order management service
