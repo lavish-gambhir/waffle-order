@@ -7,21 +7,15 @@ import (
 	pb "order-client/pkg/v1"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 type OrderClient struct {
-	conn *grpc.ClientConn
-	cl   pb.OrderManagementClient
+	cl pb.OrderManagementClient
 }
 
-func NewOrderClient(addr string) *OrderClient {
-	c, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Fatalf("unable to connect to grpc server: %v", err)
-	}
-	return &OrderClient{conn: c, cl: pb.NewOrderManagementClient(c)}
+func NewOrderClient(addr string, conn *grpc.ClientConn) *OrderClient {
+	return &OrderClient{cl: pb.NewOrderManagementClient(conn)}
 }
 
 func (ordr *OrderClient) GetWaffleOrder(ctx context.Context, orderId *wrapperspb.StringValue) (*pb.Order, error) {
@@ -31,8 +25,4 @@ func (ordr *OrderClient) GetWaffleOrder(ctx context.Context, orderId *wrapperspb
 	}
 	log.Printf("order = %v\n", order)
 	return order, nil
-}
-
-func (o *OrderClient) CloseConnection() {
-	o.conn.Close()
 }
