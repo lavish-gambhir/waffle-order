@@ -24,6 +24,7 @@ func NewOrderServer() *OrderServer { return &OrderServer{orderMap: make(map[stri
 func (srv *OrderServer) GetOrder(ctx context.Context, id *wrapperspb.StringValue) (*pb.Order, error) {
 	srv.mu.RLock()
 	defer srv.mu.RUnlock()
+	log.Printf("request to get order with id:%v\n", id)
 	if ord, ok := srv.orderMap[id.GetValue()]; ok {
 		return ord, status.New(codes.OK, "").Err()
 	}
