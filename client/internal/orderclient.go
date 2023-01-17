@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	pb "order-client/pkg/v1"
 
@@ -25,4 +26,32 @@ func (ordr *OrderClient) GetWaffleOrder(ctx context.Context, orderId *wrapperspb
 	}
 	log.Printf("order = %v\n", order)
 	return order, nil
+}
+
+func (ordr *OrderClient) AddWaffleOrder(ctx context.Context, order *pb.Order) (string, error) {
+	res, err := ordr.cl.AddOrder(ctx, order)
+	if err != nil {
+		log.Fatalf("unable to add a new order: %v\n", err)
+	}
+	log.Printf("added order, id: %v\n", res.GetValue())
+	return res.GetValue(), nil
+}
+
+func (ordr *OrderClient) SearchWithWaffleName(ctx context.Context, query *wrapperspb.StringValue) []*pb.Order {
+	var results []*pb.Order
+	searchStream, _ := ordr.cl.SearchWithWaffleName(ctx, query)
+	for {
+		searchResult, err := searchStream.Recv()
+		if err == io.EOF {
+			// got all the search results.. we are done!
+			break
+		}
+		if err != nil {
+			log.Printf("error while reaciving results of search query: %v\n", err)
+			break
+		}
+		log.Print("Search result: ", searchResult)
+		results = append(results, searchResult)
+	}
+	return results
 }
