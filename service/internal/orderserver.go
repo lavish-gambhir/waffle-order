@@ -2,8 +2,10 @@ package internal
 
 import (
 	"context"
+	"fmt"
 	"log"
 	pb "order-service/pkg/v1"
+	"strings"
 	"sync"
 
 	"github.com/gofrs/uuid"
@@ -41,4 +43,21 @@ func (srv *OrderServer) AddOrder(ctx context.Context, order *pb.Order) (*wrapper
 	order.Id = orderId.String()
 	srv.orderMap[order.Id] = order
 	return &wrapperspb.StringValue{Value: order.Id}, nil
+}
+
+func (srv *OrderServer) SearchWithWaffleName(searchStr *wrapperspb.StringValue, outStream pb.OrderManagement_SearchWithWaffleNameServer) error {
+	log.Printf("got search request with name: %v\n", searchStr.GetValue())
+	srv.mu.RLock()
+	defer srv.mu.RUnlock()
+	for _, ordr := range srv.orderMap {
+		for _, waffle := range ordr.Waffles {
+			if strings.Contains(waffle.Name, searchStr.GetValue()) {
+				err := outStream.Send(ordr)
+				if err != nil {
+					return fmt.Errorf("unable to send order to stream: %v", err)
+				}
+			}
+		}
+	}
+	return nil
 }

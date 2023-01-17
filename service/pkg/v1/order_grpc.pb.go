@@ -25,6 +25,7 @@ const _ = grpc.SupportPackageIsVersion7
 type OrderManagementClient interface {
 	GetOrder(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (*Order, error)
 	AddOrder(ctx context.Context, in *Order, opts ...grpc.CallOption) (*wrapperspb.StringValue, error)
+	SearchWithWaffleName(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (OrderManagement_SearchWithWaffleNameClient, error)
 }
 
 type orderManagementClient struct {
@@ -53,12 +54,45 @@ func (c *orderManagementClient) AddOrder(ctx context.Context, in *Order, opts ..
 	return out, nil
 }
 
+func (c *orderManagementClient) SearchWithWaffleName(ctx context.Context, in *wrapperspb.StringValue, opts ...grpc.CallOption) (OrderManagement_SearchWithWaffleNameClient, error) {
+	stream, err := c.cc.NewStream(ctx, &OrderManagement_ServiceDesc.Streams[0], "/v1.OrderManagement/searchWithWaffleName", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &orderManagementSearchWithWaffleNameClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type OrderManagement_SearchWithWaffleNameClient interface {
+	Recv() (*Order, error)
+	grpc.ClientStream
+}
+
+type orderManagementSearchWithWaffleNameClient struct {
+	grpc.ClientStream
+}
+
+func (x *orderManagementSearchWithWaffleNameClient) Recv() (*Order, error) {
+	m := new(Order)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // OrderManagementServer is the server API for OrderManagement service.
 // All implementations must embed UnimplementedOrderManagementServer
 // for forward compatibility
 type OrderManagementServer interface {
 	GetOrder(context.Context, *wrapperspb.StringValue) (*Order, error)
 	AddOrder(context.Context, *Order) (*wrapperspb.StringValue, error)
+	SearchWithWaffleName(*wrapperspb.StringValue, OrderManagement_SearchWithWaffleNameServer) error
 	mustEmbedUnimplementedOrderManagementServer()
 }
 
@@ -71,6 +105,9 @@ func (UnimplementedOrderManagementServer) GetOrder(context.Context, *wrapperspb.
 }
 func (UnimplementedOrderManagementServer) AddOrder(context.Context, *Order) (*wrapperspb.StringValue, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddOrder not implemented")
+}
+func (UnimplementedOrderManagementServer) SearchWithWaffleName(*wrapperspb.StringValue, OrderManagement_SearchWithWaffleNameServer) error {
+	return status.Errorf(codes.Unimplemented, "method SearchWithWaffleName not implemented")
 }
 func (UnimplementedOrderManagementServer) mustEmbedUnimplementedOrderManagementServer() {}
 
@@ -121,6 +158,27 @@ func _OrderManagement_AddOrder_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OrderManagement_SearchWithWaffleName_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(wrapperspb.StringValue)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(OrderManagementServer).SearchWithWaffleName(m, &orderManagementSearchWithWaffleNameServer{stream})
+}
+
+type OrderManagement_SearchWithWaffleNameServer interface {
+	Send(*Order) error
+	grpc.ServerStream
+}
+
+type orderManagementSearchWithWaffleNameServer struct {
+	grpc.ServerStream
+}
+
+func (x *orderManagementSearchWithWaffleNameServer) Send(m *Order) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // OrderManagement_ServiceDesc is the grpc.ServiceDesc for OrderManagement service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -137,6 +195,12 @@ var OrderManagement_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _OrderManagement_AddOrder_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "searchWithWaffleName",
+			Handler:       _OrderManagement_SearchWithWaffleName_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "v1/order.proto",
 }
