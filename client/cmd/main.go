@@ -23,7 +23,7 @@ func main() {
 	}
 	defer conn.Close()
 	orderClient := internal.NewOrderClient(addr, conn)
-	helloClient := v1.NewSayHelloClient(conn)
+	helloClient := v1.NewSayHelloClient(conn) // as this is just for test, not creating a wrapper over it.
 
 	resp, err := helloClient.Hello(ctx, &v1.HelloRequest{Who: "order-client"})
 	if err != nil {
