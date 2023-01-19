@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	pb "order-service/pkg/v1"
 	"strings"
@@ -60,4 +61,18 @@ func (srv *OrderServer) SearchWithWaffleName(searchStr *wrapperspb.StringValue, 
 		}
 	}
 	return nil
+}
+
+func (srv *OrderServer) UpdateOrders(stream pb.OrderManagement_UpdateOrdersServer) error {
+	log.Printf("got update order request")
+	var orderIds strings.Builder
+	for {
+		order, err := stream.Recv()
+		if err == io.EOF {
+			return stream.SendAndClose(&wrapperspb.StringValue{Value: fmt.Sprintf("orders processed! ids: %s", orderIds.String())})
+		}
+		srv.orderMap[order.Id] = order
+		log.Printf("order updated, with id: %s", order.Id)
+		orderIds.WriteString(fmt.Sprintf("%s, ", order.Id))
+	}
 }

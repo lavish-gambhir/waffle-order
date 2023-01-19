@@ -55,3 +55,21 @@ func (ordr *OrderClient) SearchWithWaffleName(ctx context.Context, query *wrappe
 	}
 	return results
 }
+
+func (ord *OrderClient) UpdateOrders(orders []*pb.Order, ctx context.Context) (string, error) {
+	outStream, err := ord.cl.UpdateOrders(ctx)
+	if err != nil {
+		log.Fatalf("unable to update orders:%v", err)
+	}
+	if err = outStream.Send(orders[0]); err != nil {
+		log.Fatalf("unable to send order:%v", err)
+	}
+	if err = outStream.Send(orders[1]); err != nil {
+		log.Fatalf("unable to send order:%v", err)
+	}
+	updateResult, err := outStream.CloseAndRecv()
+	if err != nil {
+		log.Fatalf("closeAndReceive error:%v", err)
+	}
+	return updateResult.GetValue(), nil
+}
