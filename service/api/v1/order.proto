@@ -9,6 +9,7 @@ service OrderManagement {
     rpc getOrder(google.protobuf.StringValue) returns (Order);
     rpc addOrder(Order) returns (google.protobuf.StringValue);
     rpc searchWithWaffleName(google.protobuf.StringValue) returns (stream Order);
+    rpc updateOrders(stream Order) returns (google.protobuf.StringValue);
 }
 
 message Order {
