@@ -17,7 +17,7 @@ const addr = "localhost:9090"
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithUnaryInterceptor(internal.OrderUnaryInterceptor))
+	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithUnaryInterceptor(internal.OrderUnaryInterceptor), grpc.WithStreamInterceptor(internal.NewOrderStreamingInterceptor))
 	if err != nil {
 		log.Fatalf("unable to connect to grpc server: %v", err)
 	}

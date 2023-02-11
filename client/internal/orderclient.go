@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	pb "order-client/pkg/v1"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -80,3 +81,35 @@ func OrderUnaryInterceptor(ctx context.Context, method string, req, reply any, c
 	log.Println(reply)
 	return err
 }
+
+type WrappedStream struct {
+	grpc.ClientStream
+}
+
+func NewOrderStreamingInterceptor(
+	ctx context.Context,
+	desc *grpc.StreamDesc,
+	cc *grpc.ClientConn,
+	method string,
+	streamer grpc.Streamer,
+	opts ...grpc.CallOption,
+) (grpc.ClientStream, error) {
+	log.Println("===== [Client interceptor] =====", method)
+	s, err := streamer(ctx, desc, cc, method, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return newWrappedStream(s), nil
+}
+
+func (w *WrappedStream) RecvMsg(m any) error {
+	log.Printf("====== [client::order stream interceptor\trecieved msg (type: %T) at %v", m, time.Now().Format(time.RFC3339))
+	return w.ClientStream.RecvMsg(m)
+}
+
+func (w *WrappedStream) SendMsg(m any) error {
+	log.Printf("====== [client::order stream interceptor\trecieved msg (type: %T) at %v", m, time.Now().Format(time.RFC3339))
+	return w.ClientStream.RecvMsg(m)
+}
+
+func newWrappedStream(c grpc.ClientStream) *WrappedStream { return &WrappedStream{c} }
