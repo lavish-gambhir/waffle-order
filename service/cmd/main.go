@@ -18,7 +18,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("unable to listen on port %q: %v", port, err)
 	}
-	srv := grpc.NewServer()
+	srv := grpc.NewServer(grpc.UnaryInterceptor(internal.OrderInterceptor))
 	v1.RegisterOrderManagementServer(srv, internal.NewOrderServer())
 	v1.RegisterSayHelloServer(srv, internal.NewHelloServer())
 	fmt.Printf("server listening on port:%s\n", port)

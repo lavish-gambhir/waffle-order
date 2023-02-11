@@ -9,6 +9,8 @@ import (
 	"strings"
 	"sync"
 
+	"google.golang.org/grpc"
+
 	"github.com/gofrs/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -75,4 +77,11 @@ func (srv *OrderServer) UpdateOrders(stream pb.OrderManagement_UpdateOrdersServe
 		log.Printf("order updated, with id: %s", order.Id)
 		orderIds.WriteString(fmt.Sprintf("%s, ", order.Id))
 	}
+}
+
+func OrderInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
+	log.Println("====== [order interceptor] ======", info.FullMethod)
+	res, err := handler(ctx, req)
+	log.Printf("post proc message:%v\n", res)
+	return res, err
 }
