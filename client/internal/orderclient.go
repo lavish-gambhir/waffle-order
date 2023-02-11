@@ -3,6 +3,9 @@ package internal
 import (
 	"context"
 	"fmt"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"io"
 	"log"
 	pb "order-client/pkg/v1"
@@ -23,6 +26,19 @@ func NewOrderClient(addr string, conn *grpc.ClientConn) *OrderClient {
 func (ordr *OrderClient) GetWaffleOrder(ctx context.Context, orderId *wrapperspb.StringValue) (*pb.Order, error) {
 	order, err := ordr.cl.GetOrder(ctx, orderId)
 	if err != nil {
+		errCode := status.Code(err)
+		if errCode == codes.InvalidArgument {
+			log.Printf("invalid argument error: %s", errCode)
+			errStatus := status.Convert(err)
+			for _, d := range errStatus.Details() {
+				switch info := d.(type) {
+				case *errdetails.BadRequest_FieldViolation:
+					log.Printf("invalid request field: %v", info)
+				default:
+					log.Printf("unexpected error type: %v", info)
+				}
+			}
+		}
 		return nil, fmt.Errorf("unable to get the order for id %v: %v", orderId, err)
 	}
 	log.Printf("order = %v\n", order)
