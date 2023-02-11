@@ -8,6 +8,7 @@ import (
 	pb "order-service/pkg/v1"
 	"strings"
 	"sync"
+	"time"
 
 	"google.golang.org/grpc"
 
@@ -84,4 +85,29 @@ func OrderInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, 
 	res, err := handler(ctx, req)
 	log.Printf("post proc message:%v\n", res)
 	return res, err
+}
+
+type WrappedStream struct {
+	grpc.ServerStream
+}
+
+func NewWrappedStream(ss grpc.ServerStream) *WrappedStream { return &WrappedStream{ss} }
+
+func (w *WrappedStream) RecvMsg(m any) error {
+	log.Printf("======= [streaming wrapper] ======\treceived msg (type: %T) at %s", m, time.Now().Format(time.RFC3339))
+	return w.ServerStream.RecvMsg(m)
+}
+
+func (w *WrappedStream) SendMsg(m any) error {
+	log.Printf("====== [streaming wrapper] ======\tsend msg (type: %T) at %v", m, time.Now().Format(time.RFC3339))
+	return w.ServerStream.SendMsg(m)
+}
+
+func OrderStreamInterceptor(srv any, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+	log.Println("====== [order stream interceptor] =====", info.FullMethod)
+	err := handler(srv, NewWrappedStream(ss))
+	if err != nil {
+		log.Fatal(err)
+	}
+	return err
 }
