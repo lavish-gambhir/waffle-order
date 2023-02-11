@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"fmt"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"io"
 	"log"
 	pb "order-service/pkg/v1"
@@ -28,6 +29,17 @@ func NewOrderServer() *OrderServer { return &OrderServer{orderMap: make(map[stri
 
 // TODO: Add tracing support
 func (srv *OrderServer) GetOrder(ctx context.Context, id *wrapperspb.StringValue) (*pb.Order, error) {
+	if id.Value == "-1" {
+		log.Printf("order id is invalid, id: %v", id.Value)
+		errorStatus := status.New(codes.InvalidArgument, "Invalid information received")
+		ds, err := errorStatus.WithDetails(
+			&errdetails.BadRequest_FieldViolation{Field: "ID", Description: fmt.Sprintf("order id received is not valid %s", id.GetValue())},
+		)
+		if err != nil {
+			return nil, errorStatus.Err()
+		}
+		return nil, ds.Err()
+	}
 	srv.mu.RLock()
 	defer srv.mu.RUnlock()
 	log.Printf("request to get order with id:%v\n", id)
