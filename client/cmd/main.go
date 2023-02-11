@@ -6,6 +6,7 @@ import (
 	"log"
 	"order-client/internal"
 	v1 "order-client/pkg/v1"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -15,7 +16,8 @@ import (
 const addr = "localhost:9090"
 
 func main() {
-	ctx, cancel := context.WithCancel(context.Background())
+	clientDeadline := time.Now().Add(time.Duration(2 * time.Second))
+	ctx, cancel := context.WithDeadline(context.Background(), clientDeadline)
 	defer cancel()
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithUnaryInterceptor(internal.OrderUnaryInterceptor), grpc.WithStreamInterceptor(internal.NewOrderStreamingInterceptor))
 	if err != nil {
