@@ -56,8 +56,8 @@ func (ordr *OrderClient) SearchWithWaffleName(ctx context.Context, query *wrappe
 	return results
 }
 
-func (ord *OrderClient) UpdateOrders(orders []*pb.Order, ctx context.Context) (string, error) {
-	outStream, err := ord.cl.UpdateOrders(ctx)
+func (ordr *OrderClient) UpdateOrders(orders []*pb.Order, ctx context.Context) (string, error) {
+	outStream, err := ordr.cl.UpdateOrders(ctx)
 	if err != nil {
 		log.Fatalf("unable to update orders:%v", err)
 	}
@@ -72,4 +72,11 @@ func (ord *OrderClient) UpdateOrders(orders []*pb.Order, ctx context.Context) (s
 		log.Fatalf("closeAndReceive error:%v", err)
 	}
 	return updateResult.GetValue(), nil
+}
+
+func OrderUnaryInterceptor(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+	log.Println("method:", method)
+	err := invoker(ctx, method, req, reply, cc, opts...)
+	log.Println(reply)
+	return err
 }
